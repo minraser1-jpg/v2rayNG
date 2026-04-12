@@ -379,6 +379,26 @@ object V2rayConfigManager {
                 inbound1.listen = AppConfig.LOOPBACK
             }
             inbound1.port = socksPort
+
+            // --- SOCKS5 Authentication Patch ---
+            // Applies password auth to prevent local spyware from probing the exit IP
+            // via the unauthenticated SOCKS5 proxy on :10808.
+            val socks5User = MmkvManager.decodeSettingsString(AppConfig.PREF_SOCKS5_USERNAME) ?: "vpnuser"
+            val socks5Pass = MmkvManager.decodeSettingsString(AppConfig.PREF_SOCKS5_PASSWORD) ?: "changeme"
+            inbound1.settings?.auth = "password"
+            inbound1.settings?.accounts = listOf(
+                V2rayConfig.InboundBean.InSettingsBean.AccountBean(user = socks5User, pass = socks5Pass)
+            )
+            // NOTE: Do NOT set udp = false here — it breaks hev-socks5-tunnel which relies
+            // on the SOCKS5 UDP ASSOCIATE for routing UDP traffic. UDP leaks are mitigated
+            // separately: hev-socks5-tunnel is bound to loopback, and the inbound listen
+            // address is loopback-only (see above), preventing external access.
+            // In ProxyOnly mode (no VPN tunnel) we can safely disable UDP since there's
+            // no hev-socks5-tunnel involved.
+            if (!needTun() && !SettingsManager.isUsingHevTun()) {
+                inbound1.settings?.udp = false
+            }
+            // --- End SOCKS5 Authentication Patch ---
             val fakedns = MmkvManager.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED) == true
             val sniffAllTlsAndHttp =
                 MmkvManager.decodeSettingsBool(AppConfig.PREF_SNIFFING_ENABLED, true) != false
