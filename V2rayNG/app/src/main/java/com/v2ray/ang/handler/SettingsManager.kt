@@ -452,6 +452,14 @@ object SettingsManager {
         ensureDefaultValue(AppConfig.PREF_MUX_XUDP_CONCURRENCY, "8")
         ensureDefaultValue(AppConfig.PREF_FRAGMENT_LENGTH, "50-100")
         ensureDefaultValue(AppConfig.PREF_FRAGMENT_INTERVAL, "10-20")
+
+        // Generate random SOCKS5 credentials on first install
+        if (MmkvManager.decodeSettingsString(AppConfig.PREF_SOCKS5_USERNAME).isNullOrEmpty()) {
+            MmkvManager.encodeSettings(AppConfig.PREF_SOCKS5_USERNAME, "user_" + Utils.getUuid().substring(0, 8))
+        }
+        if (MmkvManager.decodeSettingsString(AppConfig.PREF_SOCKS5_PASSWORD).isNullOrEmpty()) {
+            MmkvManager.encodeSettings(AppConfig.PREF_SOCKS5_PASSWORD, Utils.getUuid())
+        }
     }
 
     private fun ensureDefaultValue(key: String, default: String) {
