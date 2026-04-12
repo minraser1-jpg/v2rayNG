@@ -52,11 +52,6 @@
             android:summary="@string/summary_pref_prefer_ipv6"
             android:title="@string/title_pref_prefer_ipv6" />
 
-<!--        <CheckBoxPreference-->
-<!--            android:key="pref_per_app_proxy"-->
-<!--            android:summary="@string/summary_pref_per_app_proxy"-->
-<!--            android:title="@string/title_pref_per_app_proxy" />-->
-
         <CheckBoxPreference
             android:key="pref_local_dns_enabled"
             android:summary="@string/summary_pref_local_dns_enabled"
@@ -71,12 +66,6 @@
             android:key="pref_append_http_proxy"
             android:summary="@string/summary_pref_append_http_proxy"
             android:title="@string/title_pref_append_http_proxy" />
-
-<!--        <EditTextPreference-->
-<!--            android:inputType="number"-->
-<!--            android:key="pref_local_dns_port"-->
-<!--            android:summary="10853"-->
-<!--            android:title="@string/title_pref_local_dns_port" />-->
 
         <EditTextPreference
             android:key="pref_vpn_dns"
@@ -295,6 +284,29 @@
             android:key="pref_mode"
             android:summary="%s"
             android:title="@string/title_mode" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/title_socks5_security">
+
+        <EditTextPreference
+            android:key="pref_socks5_username"
+            android:title="@string/title_pref_socks5_username"
+            android:summary="@string/summary_pref_socks5_username"
+            android:inputType="text"
+            android:selectAllOnFocus="true" />
+
+        <EditTextPreference
+            android:key="pref_socks5_password"
+            android:title="@string/title_pref_socks5_password"
+            android:summary="@string/summary_pref_socks5_password"
+            android:inputType="textPassword"
+            android:selectAllOnFocus="true" />
+
+        <Preference
+            android:key="pref_generate_socks5_auth"
+            android:title="@string/title_pref_generate_socks5_auth"
+            android:summary="@string/summary_pref_generate_socks5_auth" />
 
     </PreferenceCategory>
 
