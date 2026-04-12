@@ -44,8 +44,8 @@ class TProxyService(
         val configFile = File(context.filesDir, "hev-socks5-tunnel.yaml").apply {
             writeText(configContent)
         }
-//        Log.i(AppConfig.TAG, "Config file created: ${configFile.absolutePath}")
-        Log.d(AppConfig.TAG, "HevSocks5Tunnel Config content:\n$configContent")
+        // NOTE: Config content is NOT logged — it contains SOCKS5 credentials.
+        // To debug tunnel issues, inspect the yaml file directly on the device.
 
         try {
 //            Log.i(AppConfig.TAG, "TProxyStartService...")
@@ -71,6 +71,11 @@ class TProxyService(
             appendLine("  port: ${socksPort}")
             appendLine("  address: ${AppConfig.LOOPBACK}")
             appendLine("  udp: 'udp'")
+            // Synchronise SOCKS5 credentials with xray inbound
+            val socks5User = MmkvManager.decodeSettingsString(AppConfig.PREF_SOCKS5_USERNAME) ?: "vpnuser"
+            val socks5Pass = MmkvManager.decodeSettingsString(AppConfig.PREF_SOCKS5_PASSWORD) ?: "changeme"
+            appendLine("  username: '${socks5User}'")
+            appendLine("  password: '${socks5Pass}'")
 
             // Read-write timeout settings
             val timeoutSetting = MmkvManager.decodeSettingsString(AppConfig.PREF_HEV_TUNNEL_RW_TIMEOUT) ?: AppConfig.HEVTUN_RW_TIMEOUT
