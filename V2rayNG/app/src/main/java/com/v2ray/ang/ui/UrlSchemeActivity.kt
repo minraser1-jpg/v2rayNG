@@ -63,7 +63,8 @@ class UrlSchemeActivity : BaseActivity() {
         if (uriString.isNullOrEmpty()) {
             return
         }
-        Log.i(AppConfig.TAG, uriString)
+        // NOTE: URI is NOT logged in full — it may contain vmess/vless keys, passwords, or UUIDs.
+        Log.d(AppConfig.TAG, "parseUri: scheme=${Uri.parse(uriString)?.scheme}")
 
         var decodedUrl = URLDecoder.decode(uriString, "UTF-8")
         val uri = Uri.parse(decodedUrl)
@@ -71,7 +72,6 @@ class UrlSchemeActivity : BaseActivity() {
             if (uri.fragment.isNullOrEmpty() && !fragment.isNullOrEmpty()) {
                 decodedUrl += "#${fragment}"
             }
-            Log.i(AppConfig.TAG, decodedUrl)
             lifecycleScope.launch(Dispatchers.IO) {
                 val (count, countSub) = AngConfigManager.importBatchConfig(decodedUrl, "", false)
                 withContext(Dispatchers.Main) {
