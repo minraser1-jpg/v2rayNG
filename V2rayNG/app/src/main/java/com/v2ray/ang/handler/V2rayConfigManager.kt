@@ -1070,27 +1070,30 @@ object V2rayConfigManager {
                 xhttpSetting.path = path ?: "/"
                 xhttpSetting.mode = xhttpMode
 
-                // --- Pulsar Shaper Injection ---
-                // Запускаем движок автовыбора профиля
-                val selector = ProfileAutoSelector()
-                val destHost = host.orEmpty()
-                // Поскольку мы находимся внутри генератора конфигурации без прямого доступа к стейту сети,
-                // мы передаем дефолтное значение MOBILE, селектор сам адаптируется по домену.
-                val profile = selector.selectProfile(destHost, 0L, com.v2ray.ang.pulsar.NetworkType.MOBILE)
-
-                // Парсим существующие кастомные параметры (xhttpExtra) из интерфейса,
-                // либо создаем новый JSON объект, если их нет.
+                // Парсим существующие параметры или создаем новые
                 val extraObj = JsonUtil.parseString(xhttpExtra)?.asJsonObject ?: JsonObject()
-                
-                // Внедряем динамические параметры шейпера напрямую в конфигурацию Xray
-                extraObj.addProperty("scMaxEachPostBytes", "${profile.bucketSizeBytes.first}-${profile.bucketSizeBytes.last}")
-                extraObj.addProperty("scMinPostsIntervalMs", "${profile.burstModel.pauseMsRange.first}-${profile.burstModel.pauseMsRange.last}")
-                extraObj.addProperty("scMaxBufferedPosts", 15)
-                extraObj.addProperty("scStreamUpServerSecs", "8-25")
+
+                // --- Pulsar Shaper Toggle Check ---
+                // Проверяем, включил ли пользователь тумблер в настройках UI
+                val isPulsarEnabled = MmkvManager.decodeSettingsBool(AppConfig.PREF_PULSAR_SHAPER_ENABLED, false)
+
+                if (isPulsarEnabled == true) {
+                    val selector = ProfileAutoSelector()
+                    val destHost = host.orEmpty()
+                    val profile = selector.selectProfile(destHost, 0L, com.v2ray.ang.pulsar.NetworkType.MOBILE)
+                    
+                    extraObj.addProperty("scMaxEachPostBytes", "${profile.bucketSizeBytes.first}-${profile.bucketSizeBytes.last}")
+                    extraObj.addProperty("scMinPostsIntervalMs", "${profile.burstModel.pauseMsRange.first}-${profile.burstModel.pauseMsRange.last}")
+                    extraObj.addProperty("scMaxBufferedPosts", 15)
+                    extraObj.addProperty("scStreamUpServerSecs", "8-25")
+                    
+                    Log.i("PULSAR", "Applied Pulsar Profile: ${profile.profileName} to XHTTP outbound via extra JSON")
+                } else {
+                    Log.i("PULSAR", "Pulsar Shaper is DISABLED in settings. Using standard XHTTP.")
+                }
 
                 xhttpSetting.extra = extraObj
                 streamSettings.xhttpSettings = xhttpSetting
-                Log.i("PULSAR", "Applied Pulsar Profile: ${profile.profileName} to XHTTP outbound via extra JSON")
             }
 
             NetworkType.H2.type, NetworkType.HTTP.type -> {
