@@ -250,6 +250,12 @@
 
     <PreferenceCategory android:title="@string/title_advanced">
 
+        <SwitchPreferenceCompat
+            app:key="pref_pulsar_shaper_enabled"
+            app:title="Enable Pulsar Adaptive Shaper"
+            app:summary="Адаптивный шейпинг трафика для маскировки (только XHTTP)"
+            app:defaultValue="false" />
+
         <CheckBoxPreference
             android:key="pref_is_booted"
             android:summary="@string/summary_pref_is_booted"
