@@ -7,17 +7,19 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.Tun2SocksControl
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.pulsar.ProfileAutoSelector
+import com.v2ray.ang.pulsar.NetworkType
 import java.io.File
 
-/**
- * Manages the tun2socks process that handles VPN traffic
- */
 class TProxyService(
     private val context: Context,
     private val vpnInterface: ParcelFileDescriptor,
     private val isRunningProvider: () -> Boolean,
     private val restartCallback: () -> Unit
 ) : Tun2SocksControl {
+
+    private val pulsarSelector = ProfileAutoSelector()
+
     companion object {
         @JvmStatic
         @Suppress("FunctionName")
@@ -29,26 +31,26 @@ class TProxyService(
         @Suppress("FunctionName")
         private external fun TProxyGetStats(): LongArray?
 
+        val GAMING_BYPASS_PACKAGES = listOf(
+            "com.supercell.moco",
+            "com.supercell.squad"
+        )
+
         init {
             System.loadLibrary("hev-socks5-tunnel")
         }
     }
 
-    /**
-     * Starts the tun2socks process with the appropriate parameters.
-     */
     override fun startTun2Socks() {
-//        Log.i(AppConfig.TAG, "Starting HevSocks5Tunnel via JNI")
+        val initialProfile = pulsarSelector.selectProfile("www.wildberries.ru", 0L, NetworkType.MOBILE)
+        Log.i("PULSAR", "Pulsar Engine hooked. Initial profile: ${initialProfile.profileName}")
 
         val configContent = buildConfig()
         val configFile = File(context.filesDir, "hev-socks5-tunnel.yaml").apply {
             writeText(configContent)
         }
-        // NOTE: Config content is NOT logged — it contains SOCKS5 credentials.
-        // To debug tunnel issues, inspect the yaml file directly on the device.
 
         try {
-//            Log.i(AppConfig.TAG, "TProxyStartService...")
             TProxyStartService(configFile.absolutePath, vpnInterface.fd)
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "HevSocks5Tunnel exception: ${e.message}")
@@ -71,13 +73,12 @@ class TProxyService(
             appendLine("  port: ${socksPort}")
             appendLine("  address: ${AppConfig.LOOPBACK}")
             appendLine("  udp: 'udp'")
-            // Synchronise SOCKS5 credentials with xray inbound
+            
             val socks5User = MmkvManager.decodeSettingsString(AppConfig.PREF_SOCKS5_USERNAME) ?: "vpnuser"
             val socks5Pass = MmkvManager.decodeSettingsString(AppConfig.PREF_SOCKS5_PASSWORD) ?: "changeme"
             appendLine("  username: '${socks5User}'")
             appendLine("  password: '${socks5Pass}'")
 
-            // Read-write timeout settings
             val timeoutSetting = MmkvManager.decodeSettingsString(AppConfig.PREF_HEV_TUNNEL_RW_TIMEOUT) ?: AppConfig.HEVTUN_RW_TIMEOUT
             val parts = timeoutSetting.split(",")
                 .map { it.trim() }
@@ -92,12 +93,9 @@ class TProxyService(
         }
     }
 
-    /**
-     * Stops the tun2socks process
-     */
     override fun stopTun2Socks() {
         try {
-            Log.i(AppConfig.TAG, "TProxyStopService...")
+            Log.i("PULSAR", "Pulsar Engine stopped.")
             TProxyStopService()
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Failed to stop hev-socks5-tunnel", e)
